@@ -33,7 +33,7 @@ A complete, real-time data engineering pipeline that tracks cryptocurrency "whal
 
 1. **Clone the repository**
    ```bash
-   git clone [https://github.com/yourusername/crypto_whale_tracker.git](https://github.com/yourusername/crypto_whale_tracker.git)
+   git clone [https://github.com/nbx0021/crypto-whale-tracker.git](https://github.com/nbx0021/crypto-whale-tracker.git)
    cd crypto_whale_tracker
 
 ```
