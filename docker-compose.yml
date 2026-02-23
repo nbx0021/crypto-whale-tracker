@@ -1,0 +1,124 @@
+
+services:
+  # 1. THE MESSAGE BROKER (Redpanda)
+  # Acts as the high-throughput buffer for raw trade data.
+  redpanda:
+    image: docker.redpanda.com/redpandadata/redpanda:v23.2.1
+    container_name: redpanda-broker
+    command:
+      - redpanda
+      - start
+      - --overprovisioned
+      - --smp 1
+      - --memory 1G
+      - --reserve-memory 0M
+      - --kafka-addr internal://0.0.0.0:29092,external://0.0.0.0:9092
+      - --advertise-kafka-addr internal://redpanda:29092,external://localhost:9092
+    # command:
+    #   - redpanda
+    #   - start
+    #   - --smp 1
+    #   - --memory 1G
+    #   - --reserve-memory 0M
+    #   - --overprovisioned
+    #   - --node-id 0
+    #   # internal: 9092 for other containers | external: 19092 for your host machine
+    #   - --kafka-addr PLAINTEXT://0.0.0.0:9092,OUTSIDE://0.0.0.0:19092
+    #   - --advertise-kafka-addr PLAINTEXT://redpanda:9092,OUTSIDE://localhost:19092
+    ports:
+      - "19092:19092"
+      - "9092:9092"
+    networks:
+      - whale_net
+    healthcheck:
+      test: ["CMD-SHELL", "rpk cluster health"]
+      interval: 10s
+      timeout: 3s
+      retries: 5
+
+  # 2. THE STORAGE LAYER (PostgreSQL)
+  # Stores the 1-minute aggregations and whale anomaly alerts.
+  postgres:
+    image: postgres:15
+    container_name: crypto-db
+    environment:
+      - POSTGRES_USER=admin
+      - POSTGRES_PASSWORD=adminpassword
+      - POSTGRES_DB=crypto_streaming
+      - POSTGRES_HOST_AUTH_METHOD=trust
+    ports:
+      - "5433:5432" # Host sees 5433, Containers see 5432
+    volumes:
+      - pg_data:/var/lib/postgresql/data
+      - ./database/init.sql:/docker-entrypoint-initdb.d/init.sql
+    networks:
+      - whale_net
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U admin -d crypto_streaming"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # 3. DATA INGESTION (Python Producer)
+  # Fetches live API data and pushes to Redpanda.
+  producer:
+    build: ./producer
+    container_name: whale-producer
+    depends_on:
+      redpanda:
+        condition: service_healthy
+    environment:
+      - KAFKA_BROKER=redpanda:9092 # Talking to redpanda internally
+    networks:
+      - whale_net
+    restart: on-failure
+
+  # 4. STREAM PROCESSING (PySpark)
+  # Handles windowed aggregations and anomaly detection logic.
+  processor:
+    build: ./processor
+    container_name: whale-processor
+    depends_on:
+      redpanda:
+        condition: service_healthy
+      postgres:
+        condition: service_healthy
+    environment:
+      - KAFKA_BROKER=redpanda:9092
+      - DB_HOST=postgres # Uses the service name defined above
+      - DB_PORT=5432     # Uses internal port
+      - DB_USER=admin
+      - DB_PASSWORD=adminpassword
+      - DB_NAME=crypto_streaming
+    volumes:
+      - ./processor/checkpoints:/app/checkpoints
+    networks:
+      - whale_net
+    restart: on-failure
+
+  # 5. FRONTEND UI (Django + Channels)
+  # Renders the live dashboard using WebSockets.
+  dashboard:
+    build: ./dashboard
+    container_name: whale-dashboard
+    ports:
+      - "8000:8000"
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      - DB_HOST=postgres
+      - DB_PORT=5432
+      - DB_USER=admin
+      - DB_PASSWORD=adminpassword
+      - DB_NAME=crypto_streaming
+    networks:
+      - whale_net
+    restart: on-failure
+
+networks:
+  whale_net:
+    driver: bridge
+
+volumes:
+  pg_data:

@@ -1,0 +1,26 @@
+# Virtual Environment
+venv/
+env/
+.env
+
+# Python Cache
+__pycache__/
+*.pyc
+
+# Spark Checkpoints & Logs
+processor/checkpoints/
+*.log
+
+# Database & Local Secrets
+local_settings.py
+db.sqlite3
+.idea/
+.vscode/
+
+# System Files
+Thumbs.db
+.DS_Store
+
+
+checkpoints/
+database/
