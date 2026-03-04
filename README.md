@@ -8,6 +8,8 @@
 ![Django](https://img.shields.io/badge/Django-092E20?style=for-the-badge&logo=django&logoColor=white)
 ![Apache Kafka](https://img.shields.io/badge/Redpanda_(Kafka)-231F20?style=for-the-badge&logo=apachekafka&logoColor=white)
 
+## Project Link [Linkedin](https://www.linkedin.com/posts/narendrabhandari21_dataengineering-pyspark-apachekafka-ugcPost-7432132649198182400-RP7e?utm_source=share&utm_medium=member_desktop&rcm=ACoAAD9hNm0Bs67lfyFay4q0vDsu-RTZRDcso1Q)
+
 ## Overview
 A complete, real-time data engineering pipeline that tracks cryptocurrency "whales" (massive trades). It ingests live trade data from the Binance WebSocket API, processes it through a distributed streaming engine using 1-minute tumbling windows, and pushes the aggregations and anomaly alerts to a live dashboard.
 
