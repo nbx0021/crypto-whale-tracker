@@ -1,25 +1,18 @@
-# processor/config.py
 import os
-# processor/config.py
-# if you good RAM
-# KAFKA_BROKER = "redpanda:9092"
-# TOPIC_NAME = "raw_crypto_trades"
 
-KAFKA_BROKER = "localhost:9092"
-TOPIC_NAME = "raw_crypto_trades"
+# Use environment variables for Docker compatibility
+KAFKA_BROKER = os.getenv("KAFKA_BROKER", "redpanda:29092")
+TOPIC_NAME = os.getenv("TOPIC_NAME", "raw_crypto_trades")
 
-# CHANGE LOCALHOST TO 127.0.0.1
-# Use the direct IP to avoid Windows "localhost" routing bugs
-# Change 5432 to 5433
-# processor/config.py
-# Add ?options=-c%20timezone=UTC to the end of the URL
-DB_URL = "jdbc:postgresql://127.0.0.1:5433/crypto_streaming?options=-c%20timezone=UTC"
-# DB_URL = "jdbc:postgresql://127.0.0.1:5432/crypto_streaming?options=-c%20timezone=UTC" ##for docker and have good RAM above 16 GB
-DB_USER = "admin"
-DB_PASSWORD = "adminpassword"
+DB_HOST = os.getenv("DB_HOST", "postgres")
+DB_PORT = os.getenv("DB_PORT", "5432")
+DB_NAME = os.getenv("DB_NAME", "crypto_streaming")
+DB_USER = os.getenv("DB_USER", "admin")
+DB_PASSWORD = os.getenv("DB_PASSWORD", "adminpassword")
 DB_DRIVER = "org.postgresql.Driver"
 
-# WHALE_VOLUME_THRESHOLD = 500
+# Construct JDBC URL dynamically
+DB_URL = f"jdbc:postgresql://{DB_HOST}:{DB_PORT}/{DB_NAME}?options=-c%20timezone=Asia/Kolkata"
 
-# The "Whale" threshold: Alert on any single trade over ₹50,00,000 (50 Lakhs)
-WHALE_VOLUME_THRESHOLD = 180000
+# The "Whale" threshold
+WHALE_VOLUME_THRESHOLD = int(os.getenv("WHALE_THRESHOLD", 180000))

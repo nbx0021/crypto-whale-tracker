@@ -6,7 +6,9 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 # --- CORE SETTINGS ---
 SECRET_KEY = 'django-insecure-your-secret-key-here'
 DEBUG = True 
-ALLOWED_HOSTS = ['*'] # Allowed all for easier Docker development
+ALLOWED_HOSTS = ['*'] 
+TIME_ZONE = 'Asia/Kolkata'
+USE_TZ = True
 # -------------------------------
 
 INSTALLED_APPS = [
@@ -71,13 +73,13 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.postgresql',
-        'NAME': 'crypto_streaming', # Or 'crypto_db', use whatever you used in Spark
-        'USER': 'admin',
-        'PASSWORD': 'adminpassword',
-        # CHANGED: Use localhost for local execution
-        'HOST': '127.0.0.1', 
-        # CHANGED: Use the external port exposed by Docker
-        'PORT': '5433', 
+        'NAME': os.environ.get('DB_NAME', 'crypto_streaming'),
+        'USER': os.environ.get('DB_USER', 'admin'),
+        'PASSWORD': os.environ.get('DB_PASSWORD', 'adminpassword'),
+        # Use 'postgres' (container name) if in Docker, else '127.0.0.1'
+        'HOST': os.environ.get('DB_HOST', '127.0.0.1'), 
+        # Use '5432' (internal port) if in Docker, else '5433'
+        'PORT': os.environ.get('DB_PORT', '5433'),     
     }
 }
 # -------------------------------------------------

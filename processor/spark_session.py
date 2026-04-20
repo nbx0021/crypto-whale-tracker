@@ -12,9 +12,9 @@ def get_spark_session():
         .appName("CryptoWhaleTracker") \
         .config("spark.jars.packages", "org.apache.spark:spark-sql-kafka-0-10_2.12:3.4.1,org.postgresql:postgresql:42.7.2,org.apache.commons:commons-pool2:2.11.1") \
         .config("spark.sql.shuffle.partitions", "2") \
-        .config("spark.driver.extraJavaOptions", "-Duser.timezone=UTC") \
-        .config("spark.executor.extraJavaOptions", "-Duser.timezone=UTC") \
-        .config("spark.sql.session.timeZone", "UTC") \
+        .config("spark.driver.extraJavaOptions", "-Duser.timezone=Asia/Kolkata") \
+        .config("spark.executor.extraJavaOptions", "-Duser.timezone=Asia/Kolkata") \
+        .config("spark.sql.session.timeZone", "Asia/Kolkata") \
         .master("local[*]") \
         .getOrCreate()
         

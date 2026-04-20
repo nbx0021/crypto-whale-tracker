@@ -68,7 +68,7 @@ services:
       redpanda:
         condition: service_healthy
     environment:
-      - KAFKA_BROKER=redpanda:9092 # Talking to redpanda internally
+      - KAFKA_BROKER=redpanda:29092 # Talking to redpanda internally
     networks:
       - whale_net
     restart: on-failure
@@ -84,7 +84,7 @@ services:
       postgres:
         condition: service_healthy
     environment:
-      - KAFKA_BROKER=redpanda:9092
+      - KAFKA_BROKER=redpanda:29092
       - DB_HOST=postgres # Uses the service name defined above
       - DB_PORT=5432     # Uses internal port
       - DB_USER=admin

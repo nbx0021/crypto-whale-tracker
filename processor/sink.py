@@ -1,8 +1,12 @@
 # processor/sink.py
+import logging
+from pyspark.sql import DataFrame
+import pyspark.sql.functions as F
 from config import DB_URL, DB_USER, DB_PASSWORD, DB_DRIVER, WHALE_VOLUME_THRESHOLD
-from pyspark.sql import functions as F
 
-def write_to_postgres(batch_df, batch_id):
+logger = logging.getLogger("ProcessorSink")
+
+def write_to_postgres(batch_df: DataFrame, batch_id: int) -> None:
     if batch_df.isEmpty():
         return
         
@@ -10,18 +14,21 @@ def write_to_postgres(batch_df, batch_id):
     whales_df = batch_df.filter(F.col("volume_inr") > WHALE_VOLUME_THRESHOLD)
     
     if not whales_df.isEmpty():
+        # Calculate the intensity multiplier (how many times larger than the threshold is this trade?)
         alerts_df = whales_df.select(
             F.col("symbol"),
             F.col("trade_time").alias("alert_timestamp"),
             F.col("price_inr").alias("trade_price_inr"),
             F.col("volume_inr").alias("trade_volume_inr"),
-            F.lit(0.0).alias("volume_multiplier") 
+            F.round(F.col("volume_inr") / F.lit(WHALE_VOLUME_THRESHOLD), 2).alias("volume_multiplier") 
         )
         
         alerts_df.write.format("jdbc").option("url", DB_URL) \
             .option("dbtable", "whale_alerts").option("user", DB_USER) \
             .option("password", DB_PASSWORD).option("driver", DB_DRIVER) \
             .mode("append").save()
+            
+        logger.info(f"🚨 Batch {batch_id}: Detected {whales_df.count()} Whale Trades!")
 
     # ACTION 2: Aggregate the 1-minute micro-batch for the dashboard
     agg_df = batch_df.groupBy("symbol").agg(
@@ -36,3 +43,5 @@ def write_to_postgres(batch_df, batch_id):
         .option("dbtable", "crypto_aggregates").option("user", DB_USER) \
         .option("password", DB_PASSWORD).option("driver", DB_DRIVER) \
         .mode("append").save()
+        
+    logger.info(f"✅ Batch {batch_id}: Aggregated and saved {agg_df.count()} metrics.")
